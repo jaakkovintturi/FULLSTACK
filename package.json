@@ -4,7 +4,7 @@
   "description": "jeejee",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js",
+    "start": "serve -s dist",
     "dev": "nodemon index.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
