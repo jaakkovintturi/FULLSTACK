@@ -8,6 +8,8 @@ app.use(express.json())
 morgan.token('body', (req, res) => JSON.stringify(req.body));
 app.use(morgan(':method :url :status :response-time ms - :res[content-length] :body'));
 app.use(cors())
+app.use(express.static('build'))
+
 // must parse body before morganBody as body will be logged
 // hook morganBody to express app
 
