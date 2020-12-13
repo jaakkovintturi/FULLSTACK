@@ -1,29 +1,12 @@
-
+require('dotenv').config()
 const express = require('express')
 const app = express()
 const morgan = require('morgan')
 const cors = require('cors')
-const mongoose = require('mongoose')
 app.use(express.json())
 
-const url1 =
-'mongodb+srv://JaakkoV:VDnBBGQGaWkHnt3i@cluster0.wur17.mongodb.net/person-app?retryWrites=true&w=majority'
 
-mongoose.connect(url1, { useNewUrlParser: true, useUnifiedTopology: true, useFindAndModify: false, useCreateIndex: true })
-
-const personSchema = new mongoose.Schema({
-  name: String,
-  number: String
-})
-const Person = mongoose.model('Person', personSchema)
-
-personSchema.set('toJSON', {
-  transform: (document, returnedObject) => {
-    returnedObject.id = returnedObject._id.toString()
-    delete returnedObject._id
-    delete returnedObject.__v
-  }
-})
+const Person = require('./models/person.js')
 
 morgan.token('body', (req, res) => JSON.stringify(req.body));
 app.use(morgan(':method :url :status :response-time ms - :res[content-length] :body'));
@@ -78,15 +61,14 @@ let persons = [
   })   
 
   app.get('/api/persons/:id', (req, res) => {
-    const id = Number(req.params.id)
-    console.log(id)
-    const person = persons.find(p => p.id === id)
-    if (person) {
-        res.json(person)
+   Person.findById(req.params.id).then(pers => {
+    if (pers) {
+        res.json(pers)
       } else {
         res.status(404).end()
       }
     })
+  })
 
     app.delete('/api/persons/:id', (request, response) => {
         const id = Number(request.params.id)
@@ -112,17 +94,19 @@ let persons = [
         error: 'name must be unique' 
       })
     }
-    const person = {
+    const person = new Person({
       id: Math.floor(Math.random() * 100),
       name: cont.name,
       number: cont.number
-    }
-    persons = persons.concat(person)
+    })
+  
     persons1 = persons1.concat(cont.name)
-    res.json(person)
+    person.save().then(savedPerson => {
+      response.json(savedPerson)
+    })
     
   })
-  const PORT = process.env.PORT || 3003
+  const PORT = process.env.PORT 
   app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`)
   })
