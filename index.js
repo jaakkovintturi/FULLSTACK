@@ -3,7 +3,27 @@ const express = require('express')
 const app = express()
 const morgan = require('morgan')
 const cors = require('cors')
+const mongoose = require('mongoose')
 app.use(express.json())
+
+const url1 =
+'mongodb+srv://JaakkoV:VDnBBGQGaWkHnt3i@cluster0.wur17.mongodb.net/person-app?retryWrites=true&w=majority'
+
+mongoose.connect(url1, { useNewUrlParser: true, useUnifiedTopology: true, useFindAndModify: false, useCreateIndex: true })
+
+const personSchema = new mongoose.Schema({
+  name: String,
+  number: String
+})
+const Person = mongoose.model('Person', personSchema)
+
+personSchema.set('toJSON', {
+  transform: (document, returnedObject) => {
+    returnedObject.id = returnedObject._id.toString()
+    delete returnedObject._id
+    delete returnedObject.__v
+  }
+})
 
 morgan.token('body', (req, res) => JSON.stringify(req.body));
 app.use(morgan(':method :url :status :response-time ms - :res[content-length] :body'));
@@ -47,7 +67,9 @@ let persons = [
   let persons1 = persons 
 
    app.get('/api/persons', (req, res) => {
-    res.json(persons)
+    Person.find({}).then(persons => {
+      res.json(persons)
+    })
   })
   
   app.get('/info', (request, response) => {
