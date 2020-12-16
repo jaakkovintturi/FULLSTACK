@@ -2,7 +2,6 @@
 import './App.css';
 
 import React, { useState, useEffect } from 'react'
-import axios from 'axios'
 import personService from './services/persons'
 
 
@@ -34,8 +33,8 @@ const Person = ( {person, msg, persons} ) => {
   const confirmation = () => {
     if (window.confirm(`Delete ${person.name} ?`)) {
       if(persons.includes(person)) {
-      axios 
-      .delete(`http://localhost:3003/api/persons/${person.id}`)
+      personService 
+      .deleteNumber(person.id)
       console.log('Person deleted.')
     } 
       msg(`${person.name} deleted.`)
@@ -63,7 +62,6 @@ const Persons = ({setPersons, persons, setNewMessage}) => {
   useEffect(() => {
 
     const getPersons = () => {
-    console.log('effect')
     personService
       .getAll()
       .then(response => {
@@ -75,6 +73,7 @@ const Persons = ({setPersons, persons, setNewMessage}) => {
   }, [])
 
   console.log('render', persons.length, 'notes')
+
   return (
       <table>
           <tbody>
@@ -91,6 +90,7 @@ const App = () => {
   const [ newName, setNewName ] = useState('')
   const [ newNumber, setNewNumber ] = useState('')
   const [ newMessage, setNewMessage ] = useState(null)
+ 
   const handleNameChange = (event) => {
     setNewName(event.target.value)
   }
@@ -107,61 +107,60 @@ const addInformation = (event) => {
     number: newNumber
   }
 
-
-  const existingPerson = persons.find(p => p.name === newName)
+  const names = persons.map(person => person.name);
+  const existingPerson = persons.find(p => p.name === nameObject.name)
    
-  const changeNumber = id => {
-    const id1 = (persons.find(n=>n.id===id))
-    
-    const changedNumber = {...id1, number: newNumber}
-  
+
+  const changeNumber = () => {
     personService
-    .update(Number(id1.id), changedNumber)
+    .update(existingPerson.id, nameObject)
     .then(response => response.data)
     .then(response => {
-      setPersons(persons.map(note => Number(note.id) !== Number(id) ? note : response.data))
+      setPersons(persons.map(note => note.name !== nameObject.name ? note : response))
     })
     .catch(error => {
-      setNewMessage(`Information of '${changedNumber.name}' has already been removed from server`)
+      setNewMessage(`Information of '${nameObject.name}' has already been removed from server`)
       setTimeout(() => {
         setNewMessage(null)
       }, 4000)
-      setPersons(persons.filter(n => Number(n.id) !== Number(id)))
+      setPersons(persons.filter(n => (n.id) !== existingPerson.id))
 
     })
    
   }
 
-  if(existingPerson!==undefined && newNumber!=="") {
-    if (window.confirm(`${newName} is already added to phonebook, replace the old number with a new one?`)) {
-    changeNumber(existingPerson.id)
+  if(!(names.includes(newName)) && newNumber!=="") {
 
-    }
-  } else if(newName!=="" && newNumber!=="") {
-  setPersons(persons.concat(nameObject))
-  setNewName('')
-  setNewNumber('')
 
   setNewMessage(`Lisättiin ${newName}`)
+  console.log(nameObject.id)
   setTimeout(() => {
     setNewMessage(null)
   }, 2500)
-  
   personService
   .create(nameObject)
   .then(response => {
     console.log(response)
   })
+  .catch(error => {
+    setNewMessage(error.response.data.error)
+    console.log(error.response.data)
+  })
+  setPersons(persons.concat(nameObject))
+  setNewName('')
+  setNewNumber('')
 }
-
+    else if (window.confirm(`${newName} is already added to phonebook, replace the old number with a new one?`)) {
+    changeNumber()
+    }
 }
 
 const gone = () => {
   if (window.confirm(`Delete all the names?`)) { 
     for (let i = 0; i < persons.length; i++) {
     let delete1 = persons[i]
-    axios 
-    .delete(`http://localhost:3003/api/persons/${delete1.id}`)
+    personService 
+    .deleteNumber(delete1.id)
     
 }console.log('Persons deleted.')
 }
